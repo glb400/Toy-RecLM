@@ -56,16 +56,6 @@ def random_neq(l, r, s):
 class PretrainDataset_NEW(Dataset):
     def __init__(self, user_train, usernum, itemnum, maxlen):
         super().__init__()        
-        # data_lst=[]
-        # for data_path in data_path_lst:
-        #     with open(data_path,'rb') as f:
-        #         data=np.fromfile(f,dtype=np.uint16)
-        #         data_lst.append(data)
-        # data = np.concatenate(data_lst)
-        # data = data[:max_length*int(len(data)/max_length)]
-        # #np.random.shuffle(data)
-        # self.data = data.reshape(-1,max_length)
-
         self.user_train = user_train
         self.usernum = usernum
         self.itemnum = itemnum
@@ -77,11 +67,6 @@ class PretrainDataset_NEW(Dataset):
         return len(self.user_train.items())
     
     def __getitem__(self, index: int):
-        # sample = self.data[index]
-        # X=np.array(sample[:-1]).astype(np.int64)
-        # Y=np.array(sample[1:]).astype(np.int64)       
-        # return torch.from_numpy(X),torch.from_numpy(Y)
-        
         # random sampling
         user = np.random.randint(1, self.usernum + 1)
         while len(self.user_train[user]) <= 1: user = np.random.randint(1, self.usernum + 1)
