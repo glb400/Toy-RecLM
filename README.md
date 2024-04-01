@@ -55,7 +55,15 @@ A toy large model for recommender system based on Meta's [actions-speak-louder-t
 
 3 Model Training
 
-We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},\mathcal{S}_{2}^{u},\cdots,\mathcal{S}_{|\mathcal{S}^{u}|-1}^{u})$ to a fixed length sequence $s = \{s_1, s_2, . . . , s_n\}$ via truncation or padding items. We define $o_t$ as the expected output at time step $t$ and  adopt the binary cross entropy loss as the objective function as in SASRec.
+We convert each user sequence (excluding the last action) 
+
+$$(\mathcal{S}_{1}^{u},\mathcal{S}_{2}^{u},\cdots,\mathcal{S}_{|\mathcal{S}^{u}|-1}^{u})$$ 
+
+to a fixed length sequence 
+
+$$s = \{s_1, s_2, . . . , s_n\}$$
+
+via truncation or padding items. We define $o_t$ as the expected output at time step $t$ and  adopt the binary cross entropy loss as the objective function as in SASRec.
 
 <div  align="center">    
     <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/sasrec3.png" width = "300" align=center />
