@@ -41,27 +41,25 @@ A toy large model for recommender system based on Meta's [actions-speak-louder-t
     ***------------------------------ !!! TBD !!! ------------------------------***
 
     + HSTU
+        
+        <div  align="center">    
+            <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm2.png" width = "200" align=center />
+            <p>HSTU formulae</p>
+        </div>
+    
+        <div  align="center">    
+            <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm3.png" width = "200" align=center />
+            <p>HSTU Structure</p>
+        </div>
 
-    <div  align="center">    
-        <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm2.png" width = "200" align=center />
-        <p>HSTU formulae</p>
-    </div>
-
-    <div  align="center">    
-        <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm3.png" width = "200" align=center />
-        <p>HSTU Structure</p>
-    </div>
-
-        + Self-Attention
-
-        Our code for Modified model's HSTU
-
-        ```python
-
-
-        ```        
+        + Self-Attention    
 
         + Interaction
+
+        + Code for HSTU
+
+            ```python
+            ```    
 
 
 3 Model Training
