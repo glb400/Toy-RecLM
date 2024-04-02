@@ -596,6 +596,3 @@ class LLaMA2_SASRec(nn.Module):
 
         return logits # preds # (U, I)
 
-
-
-

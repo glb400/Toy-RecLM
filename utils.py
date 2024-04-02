@@ -171,7 +171,6 @@ def evaluate(model, dataset, maxlen, device):
     else:
         users = range(1, usernum + 1)
     for u in tqdm(users):
-
         if len(train[u]) < 1 or len(test[u]) < 1: continue
 
         seq = np.zeros([maxlen], dtype=np.int32)
