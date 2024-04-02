@@ -18,21 +18,21 @@ A toy large model for recommender system based on Meta's [actions-speak-louder-t
     + Part 1: At first, we stack LLaMA2's Transformer Blocks. Note that since LLaMA2 uses decoder-only framework, it utilizes casual mask just the same as SASRec. 
 
     <div  align="center">    
-        <img src="./figs/llama1.png" width = "300" align=center />
+        <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/llama1.png" width = "300" align=center />
         <p>LLaMA2 Transformer Block</p>
     </div>
 
     + Part 2.1: After Transformer Blocks, we implement prediction layer in SASRec. Specifically, we adopt an MF layer to predict the relevance of item $i$ by sharing item embedding.
 
     <div  align="center">    
-        <img src="./figs/sasrec1.png" width = "300" align=center />
+        <img src="https://github.com/glb400/Toy-RecLM/blob/main/sasrec1.png" width = "300" align=center />
         <p>MF Layer using Shared Item Embedding</p>
     </div>
      
     + Part 2.2: we generate an embedding by considering all actions of a user following SASrec.
 
     <div  align="center">    
-        <img src="./figs/sasrec2.png" width = "300" align=center />
+        <img src="https://github.com/glb400/Toy-RecLM/blob/main/sasrec2.png" width = "300" align=center />
         <p>Explicit User Modeling by Generating Embedding</p>
     </div>
 
@@ -59,9 +59,9 @@ A toy large model for recommender system based on Meta's [actions-speak-louder-t
 We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},\mathcal{S}_{2}^{u},\cdots,\mathcal{S}_{|\mathcal{S}^{u}|-1}^{u})$ to a fixed length sequence $s = \{s_1, s_2, . . . , s_n\}$ via truncation or padding items. We define $o_t$ as the expected output at time step $t$ and  adopt the binary cross entropy loss as the objective function as in SASRec.
 
 <div  align="center">    
-    <img src="./figs/sasrec3.png" width = "300" align=center />
+    <img src="https://github.com/glb400/Toy-RecLM/blob/main/sasrec3.png" width = "300" align=center />
     <br>
-    <img src="./figs/sasrec4.png" width = "300" align=center />
+    <img src="https://github.com/glb400/Toy-RecLM/blob/main/sasrec4.png" width = "300" align=center />
     <p>Model Training following SASRec</p>
 </div>
 
