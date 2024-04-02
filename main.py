@@ -5,6 +5,7 @@ import math
 import pickle
 from contextlib import nullcontext
 import numpy as np
+import argparse
 import torch
 import wandb
 from model import LLaMA2_SASRec, ModelArgs
@@ -14,8 +15,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from dataset import PretrainDataset_NEW
 import logging
 
-
-from sasrec_utils import *
+from utils import *
 
 
 # For example, to run with DDP on 4 gpus on 1 node:
@@ -143,11 +143,11 @@ def train_epoch(epoch, device):
             pos_logits, neg_logits = model(user_arr, seq_arr, pos_arr, neg_arr)
             pos_labels, neg_labels = torch.ones(pos_logits.shape, device=device), torch.zeros(neg_logits.shape, device=device)
 
-            indices = np.where(pos_arr != 0)
+            indices = torch.where(pos_arr != 0)
             loss = bce_criterion(pos_logits[indices], pos_labels[indices])
             loss += bce_criterion(neg_logits[indices], neg_labels[indices])
             # restrict the l2-norm of item embedding table parameters
-            for param in model.item_emb.parameters(): loss += l2_emb * torch.norm(param)
+            for param in model.module.item_emb.parameters(): loss += l2_emb * torch.norm(param)
             loss = loss / gradient_accumulation_steps
         # immediately async prefetch next batch while model is doing the forward pass on the GPU
         # backward pass, with gradient scaling if training in fp16
@@ -189,7 +189,7 @@ def train_epoch(epoch, device):
                 model.train()
 
 
-def init_model(usernum, itemnum, device):
+def init_model(usernum, itemnum, device, ckpt_name="epoch_0.pth"):
     # model init
     model_args = dict(
         dim=dim,
@@ -200,6 +200,7 @@ def init_model(usernum, itemnum, device):
         multiple_of=multiple_of,
         max_seq_len=max_seq_len,
         dropout=dropout,
+        maxlen=maxlen
     )  # start with model_args from command line
     if init_from == "scratch":
         # init a new model from scratch
@@ -207,23 +208,14 @@ def init_model(usernum, itemnum, device):
         gptconf = ModelArgs(**model_args)
         model = LLaMA2_SASRec(usernum, itemnum, device, gptconf)
     elif init_from == "resume":
-        print(f"Resuming training from {out_dir}")
+        print(f"Resuming training from {save_dir}")
         # resume training from a checkpoint.
-        ckpt_path = os.path.join(out_dir, "ckpt.pt")
+        ckpt_path = os.path.join(save_dir, ckpt_name)
         checkpoint = torch.load(ckpt_path, map_location=device)
-        checkpoint_model_args = checkpoint["model_args"]
-        # force these config attributes to be equal otherwise we can't even resume training
-        # the rest of the attributes (e.g. dropout) can stay as desired from command line
-
-        # for k in ["dim", "n_layers", "n_heads", "n_kv_heads", "vocab_size", "multiple_of", "max_seq_len"]:
-        #     model_args[k] = checkpoint_model_args[k]
-        for k in ["dim", "n_layers", "n_heads", "n_kv_heads", "multiple_of", "max_seq_len"]:
-            model_args[k] = checkpoint_model_args[k]
-
         # create the model
         gptconf = ModelArgs(**model_args)
         model = LLaMA2_SASRec(usernum, itemnum, device, gptconf)
-        state_dict = checkpoint["model"]
+        state_dict = checkpoint
         # fix the keys of the state dictionary :(
         # honestly no idea how checkpoints sometimes get this prefix, have to debug more
         unwanted_prefix = "_orig_mod."
@@ -231,24 +223,37 @@ def init_model(usernum, itemnum, device):
             if k.startswith(unwanted_prefix):
                 state_dict[k[len(unwanted_prefix) :]] = state_dict.pop(k)
         model.load_state_dict(state_dict)
-        iter_num = checkpoint["iter_num"]
-        best_val_loss = checkpoint["best_val_loss"]
     return model
+
 # I/O
+def str2bool(s):
+    if s not in {'false', 'true'}:
+        raise ValueError('Not a valid boolean string')
+    return s == 'true'
+
 if __name__=="__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--eval_only', default=False, type=str2bool)
+    parser.add_argument('--ckpt_name', default="epoch_0.pth", type=str)
+    args = parser.parse_args()
+
     run = wandb.init(
     # Set the project where this run will be logged
     project="Toy-RecLM",
     # Track hyperparameters and run metadata
     config={
     })
+
+    # Mode 
+    eval_only = args.eval_only # if True, script exits right after the first eval
+
     out_dir = 'out'
-    max_epoch = 1
+    # max_epoch = 1
+    max_epoch = 20
     eval_interval = 1
     log_interval = 100
     save_interval = 10000
     eval_iters = 200
-    eval_only = False # if True, script exits right after the first eval
     always_save_checkpoint = True # if True, always save a checkpoint after each eval
     init_from = 'scratch' # 'scratch' or 'resume' or 'gpt2*'
     #
@@ -293,7 +298,7 @@ if __name__=="__main__":
     # config = {k: globals()[k] for k in config_keys}  # will be useful for logging
     # -----------------------------------------------------------------------------
 
-    save_dir =os.path.join(out_dir , 'pretrain')
+    save_dir =os.path.join(out_dir , 'train')
     if not os.path.exists(save_dir): os.makedirs(save_dir)
     logger = get_logger(os.path.join(save_dir,'log.log'))
     # various inits, derived attributes, I/O setup
@@ -324,10 +329,11 @@ if __name__=="__main__":
         master_process = True
         seed_offset = 0
         ddp_world_size = 1
-    tokens_per_iter = gradient_accumulation_steps * ddp_world_size * batch_size * max_seq_len
+    # tokens_per_iter = gradient_accumulation_steps * ddp_world_size * batch_size * max_seq_len
+    tokens_per_iter = gradient_accumulation_steps * ddp_world_size * batch_size * maxlen
     if master_process:
         print(f"tokens per iteration will be: {tokens_per_iter:,}")
-        print(f"breaks down as: {gradient_accumulation_steps} grad accum steps * {ddp_world_size} processes * {batch_size} batch size * {max_seq_len} max seq len")
+        print(f"breaks down as: {gradient_accumulation_steps} grad accum steps * {ddp_world_size} processes * {batch_size} batch size * {maxlen} maxlen")
 
     if master_process:
         os.makedirs(out_dir, exist_ok=True)
@@ -393,13 +399,27 @@ if __name__=="__main__":
     raw_model = model.module if ddp else model # unwrap DDP container if needed
     # training loop
     iter_per_epoch=len(train_loader)
-    for epoch in range(max_epoch):
-        if eval_only: break
-        train_epoch(epoch, device)
-        if ddp:
-            if torch.distributed.get_rank() == 0:  #一般用0，当然，可以选任意的rank保存。
+    if not eval_only:
+        for epoch in range(max_epoch):
+            if eval_only: break
+            train_epoch(epoch, device)
+            if ddp:
+                if torch.distributed.get_rank() == 0:  #一般用0，当然，可以选任意的rank保存。
+                    torch.save(raw_model.state_dict(),'{}/epoch_{}.pth'.format(save_dir,epoch))
+            else:
                 torch.save(raw_model.state_dict(),'{}/epoch_{}.pth'.format(save_dir,epoch))
-        else:
-            torch.save(raw_model.state_dict(),'{}/epoch_{}.pth'.format(save_dir,epoch))
+    else:
+        # simple test on cpu
+        device = 'cpu'
+        init_from = 'resume'
+        ckpt_name = args.ckpt_name
+        model=init_model(usernum, itemnum, device, ckpt_name)
+        model.eval()
+        model.to(device)
+        t_test = evaluate(model, dataset, maxlen, device)
+        print('test (NDCG@10: %.4f, HR@10: %.4f)' % (t_test[0], t_test[1]))
+
     if ddp:
         destroy_process_group()
+
+

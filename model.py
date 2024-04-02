@@ -20,6 +20,7 @@ class ModelArgs:
     norm_eps: float = 1e-5
     max_seq_len: int = 2048
     dropout: float = 0.0
+    maxlen: int = 50
 
 
 class RMSNorm(torch.nn.Module):
@@ -47,10 +48,10 @@ def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
 def reshape_for_broadcast(freqs_cis: torch.Tensor, x: torch.Tensor):
     ndim = x.ndim
     assert 0 <= 1 < ndim
-    print(f"freqs_cis.shape:{freqs_cis.shape}")
-    print(f"x.shape:{x.shape}")
-    print(f"x[1].shape:{x.shape[1]}")
-    print(f"x[-1].shape:{x.shape[-1]}")
+    # print(f"freqs_cis.shape:{freqs_cis.shape}")
+    # print(f"x.shape:{x.shape}")
+    # print(f"x[1].shape:{x.shape[1]}")
+    # print(f"x[-1].shape:{x.shape[-1]}")
 
     assert freqs_cis.shape == (x.shape[1], x.shape[-1])
     shape = [d if i == 1 or i == ndim - 1 else 1 for i, d in enumerate(x.shape)]
@@ -423,9 +424,11 @@ class LLaMA2_SASRec(nn.Module):
         # share the unembedding parameters with the embedding parameters
         self.item_emb.weight = self.output.weight # https://paperswithcode.com/method/weight-tying
 
-
         # some useful precompute for the RoPE relative positional embeddings
-        freqs_cos, freqs_sin = precompute_freqs_cis(self.params.dim // self.params.n_heads, self.params.max_seq_len)
+        
+        # freqs_cos, freqs_sin = precompute_freqs_cis(self.params.dim // self.params.n_heads, self.params.max_seq_len)
+        # set freqs length to be same as SASRec seqs (self.params.maxlen)
+        freqs_cos, freqs_sin = precompute_freqs_cis(self.params.dim // self.params.n_heads, self.params.maxlen)
         self.register_buffer("freqs_cos", freqs_cos, persistent=False)
         self.register_buffer("freqs_sin", freqs_sin, persistent=False)
 
@@ -473,8 +476,7 @@ class LLaMA2_SASRec(nn.Module):
     # ----- New Forward Function: Combination of LLaMA2 & SASRec for Recommender System -----
             
     def log2feats(self, log_seqs):
-        seqlen = log_seqs.shape[0]
-        print(f"seqlen: {seqlen}")
+        bsz, seqlen = log_seqs.shape
 
         # cite from SASRec
         # similar to seqs = self.tok_embeddings(log_seqs) in LLaMA2 Model
@@ -503,7 +505,6 @@ class LLaMA2_SASRec(nn.Module):
         pos_embs = self.item_emb(torch.tensor(pos_seqs, dtype=torch.long))
         neg_embs = self.item_emb(torch.tensor(neg_seqs, dtype=torch.long))
         
-
         pos_logits = (log_feats * pos_embs).sum(dim=-1)
         neg_logits = (log_feats * neg_embs).sum(dim=-1)
 
