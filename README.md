@@ -1,6 +1,6 @@
 # Toy-RecLM
 
-A toy large model for recommender system based on Meta's [actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf) and [SASRec](https://cseweb.ucsd.edu/~jmcauley/pdfs/icdm18.pdf).
+A toy large model for recommender system based on [LLaMA2](https://arxiv.org/pdf/2307.09288.pdf), [SASRec](https://cseweb.ucsd.edu/~jmcauley/pdfs/icdm18.pdf), and Meta's [actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf).
 
 
 ## Basic Model
