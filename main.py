@@ -8,7 +8,7 @@ import numpy as np
 import argparse
 import torch
 import wandb
-from model import LLaMA2_SASRec, ModelArgs
+from model import LLaMA2_SASRec, HSTU_SASRec, ModelArgs
 from torch.distributed import destroy_process_group, init_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 
@@ -118,7 +118,7 @@ def get_lr(it):
 
 bce_criterion = torch.nn.BCEWithLogitsLoss()
 
-def train_epoch(epoch, device):
+def train_epoch(epoch, device, model_name):
     l2_emb = 0.0
     start_time=time.time()
     for step, (user_arr, seq_arr, pos_arr, neg_arr) in enumerate(train_loader):
@@ -181,15 +181,15 @@ def train_epoch(epoch, device):
             if ddp:
                 if torch.distributed.get_rank() == 0:
                     model.eval()
-                    torch.save(model.module.state_dict(),'{}/iter_{}.pth'.format(save_dir,int(step+epoch*iter_per_epoch)))
+                    torch.save(model.module.state_dict(),'{}/{}_iter_{}.pth'.format(save_dir,model_name,int(step+epoch*iter_per_epoch)))
                     model.train()
             else:
                 model.eval()
-                torch.save(model.state_dict(),'{}/iter_{}.pth'.format(save_dir,int(step+epoch*iter_per_epoch)))
+                torch.save(model.state_dict(),'{}/{}_iter_{}.pth'.format(save_dir,model_name,int(step+epoch*iter_per_epoch)))
                 model.train()
 
 
-def init_model(usernum, itemnum, device, ckpt_name="epoch_0.pth"):
+def init_model(usernum, itemnum, device, model_name="llama", ckpt_name="epoch_0.pth"):
     # model init
     model_args = dict(
         dim=dim,
@@ -206,15 +206,22 @@ def init_model(usernum, itemnum, device, ckpt_name="epoch_0.pth"):
         # init a new model from scratch
         print("Initializing a new model from scratch")
         gptconf = ModelArgs(**model_args)
-        model = LLaMA2_SASRec(usernum, itemnum, device, gptconf)
+        if model_name == "llama":
+            model = LLaMA2_SASRec(usernum, itemnum, device, gptconf)
+        elif model_name == "hstu":
+            model = HSTU_SASRec(usernum, itemnum, device, gptconf)
     elif init_from == "resume":
         print(f"Resuming training from {save_dir}")
         # resume training from a checkpoint.
+        ckpt_name = model_name + "_" + ckpt_name
         ckpt_path = os.path.join(save_dir, ckpt_name)
         checkpoint = torch.load(ckpt_path, map_location=device)
         # create the model
         gptconf = ModelArgs(**model_args)
-        model = LLaMA2_SASRec(usernum, itemnum, device, gptconf)
+        if model_name == "llama":
+            model = LLaMA2_SASRec(usernum, itemnum, device, gptconf)
+        elif model_name == "hstu":
+            model = HSTU_SASRec(usernum, itemnum, device, gptconf)
         state_dict = checkpoint
         # fix the keys of the state dictionary :(
         # honestly no idea how checkpoints sometimes get this prefix, have to debug more
@@ -235,6 +242,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--eval_only', default=False, type=str2bool)
     parser.add_argument('--ckpt_name', default="epoch_0.pth", type=str)
+    parser.add_argument('--model_name', default="llama", type=str)
     args = parser.parse_args()
 
     run = wandb.init(
@@ -246,6 +254,8 @@ if __name__=="__main__":
 
     # Mode 
     eval_only = args.eval_only # if True, script exits right after the first eval
+    # model_name
+    model_name = args.model_name
 
     out_dir = 'out'
     # max_epoch = 1
@@ -377,7 +387,8 @@ if __name__=="__main__":
         sampler=train_sampler
     )
     #init model
-    model=init_model(usernum, itemnum, device)
+    print(f"model_name:{model_name}")
+    model=init_model(usernum, itemnum, device, model_name)
     model.to(device)
     # initialize a GradScaler. If enabled=False scaler is a no-op
     scaler = torch.cuda.amp.GradScaler(enabled=(dtype == 'float16'))
@@ -402,18 +413,18 @@ if __name__=="__main__":
     if not eval_only:
         for epoch in range(max_epoch):
             if eval_only: break
-            train_epoch(epoch, device)
+            train_epoch(epoch, device, model_name)
             if ddp:
                 if torch.distributed.get_rank() == 0:  #一般用0，当然，可以选任意的rank保存。
-                    torch.save(raw_model.state_dict(),'{}/epoch_{}.pth'.format(save_dir,epoch))
+                    torch.save(raw_model.state_dict(),'{}/{}_epoch_{}.pth'.format(save_dir,model_name,epoch))
             else:
-                torch.save(raw_model.state_dict(),'{}/epoch_{}.pth'.format(save_dir,epoch))
+                torch.save(raw_model.state_dict(),'{}/{}_epoch_{}.pth'.format(save_dir,model_name,epoch))
     else:
         # simple test on cpu
         device = 'cpu'
         init_from = 'resume'
         ckpt_name = args.ckpt_name
-        model=init_model(usernum, itemnum, device, ckpt_name)
+        model=init_model(usernum, itemnum, device, model_name, ckpt_name)
         model.eval()
         model.to(device)
         t_test = evaluate(model, dataset, maxlen, device)

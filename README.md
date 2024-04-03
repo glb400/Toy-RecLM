@@ -3,7 +3,7 @@
 A toy large model for recommender system based on Meta's [actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf) and [SASRec](https://cseweb.ucsd.edu/~jmcauley/pdfs/icdm18.pdf).
 
 
-## Basic Model
+## v1.0: Basic Model
 
 1 Training Framework
 
@@ -38,30 +38,16 @@ A toy large model for recommender system based on Meta's [actions-speak-louder-t
 
 + Version 2. **[actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf)'s modification for Model** -- Hierarchical Sequential Transduction Unit (HSTU)
 
-    ***------------------------------ !!! TBD !!! ------------------------------***
+    ***Note that HSTU adopts a new pointwise aggregated attention mechanism instead of softmax attention in Transformers. (Just as in [Deep Interest Network](https://github.com/zhougr1993/DeepInterestNetwork)).***
 
     + HSTU
         
         <div  align="center">    
             <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm2.png" width = "200" align=center />
-            <p>HSTU formulae</p>
+            <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm3.png" width = "200" align=center />
+            <p>HSTU formulae & Structure</p>
         </div>
     
-        <div  align="center">    
-            <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm3.png" width = "200" align=center />
-            <p>HSTU Structure</p>
-        </div>
-
-        + Self-Attention    
-
-        + Interaction
-
-        + Code for HSTU
-
-            ```python
-            ```    
-
-
 3 Model Training
 
 We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},\mathcal{S}_{2}^{u},\cdots,\mathcal{S}_{|\mathcal{S}^{u}|-1}^{u})$ to a fixed length sequence $s = \{s_1, s_2, . . . , s_n\}$ via truncation or padding items. We define $o_t$ as the expected output at time step $t$ and  adopt the binary cross entropy loss as the objective function as in SASRec.
@@ -92,18 +78,26 @@ Moreover, ***auxiliary time series tokens*** could be added into seqs above if a
 
 Predict $p(\hat{s}_{i+1}|s_1,\cdots,s_i )$, and ***non-behavioral tokens & negative feedback*** will not included in loss calculation.
 
-To train this model, use the command (set mode by *\$eval_only\$*)
+To train this model, use the command (set mode by *\$eval_only\$* and choose backbone by *\$model_name\$*)
 ```bash
-torchrun --standalone --nproc_per_node=2 main.py --eval_only=false
+# LLaMA2 as backbone
+torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name='llama'
+
+# HSTU as backbone
+torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name='hstu'
 ```
 
 3 Evaluation
 
 Use **NDCG\@10** and **HR\@10** to evaluate performance on whole dataset.
 
-To evalutate this model by NDCG and hit ratio, use the command (set mode by *\$eval_only\$* and load checkpoint by *\$ckpt_name\$*)
+To evalutate this model by NDCG and hit ratio, use the command (set mode by *\$eval_only\$* and load checkpoint by *\$ckpt_name\$*,  and choose backbone by *\$model_name\$*)
 ```bash
-torchrun --standalone --nproc_per_node=2 main.py --eval_only=true --ckpt_name='epoch_15.pth'
+# LLaMA2 as backbone
+torchrun --standalone --nproc_per_node=2 main.py --eval_only=true --ckpt_name='epoch_15.pth' --model_name='llama'
+
+# HSTU as backbone
+torchrun --standalone --nproc_per_node=2 main.py --eval_only=true --ckpt_name='epoch_15.pth' --model_name='hstu'
 ```
 
 About evaluation function, please refer to https://pmixer.github.io/posts/Argsort.
@@ -113,9 +107,9 @@ Dataset:
 + [Movielens1M_m1](https://huggingface.co/datasets/reczoo/Movielens1M_m1)
 
 
-## Part2: Basic Implementation for **CTR Prediction**
+<!-- ## Part2: Basic Implementation for **CTR Prediction**
 
-***------------------------------ !!! TBD !!! ------------------------------***
+***------------------------------ !!! TBD !!! ------------------------------*** -->
 
 
 <!-- ## v1.1: Support [Deepspeed](https://github.com/microsoft/DeepSpeed)
@@ -123,7 +117,7 @@ Dataset:
 
 ## v1.2: Support [Megatron](https://github.com/alibaba/Megatron-LLaMA)
 
-## v1.3 Support GQA and SWA based on [mistral](https://github.com/mistralai/mistral-src)
+## v1.3 Support **Mixture of Experts(MoEs)** and **Sliding Window Attention(SWA)** based on [mistral](https://github.com/mistralai/mistral-src)
 
 ## v1.4: Support Low-memory & Acceleration Optimization
 
