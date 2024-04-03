@@ -3,7 +3,7 @@
 A toy large model for recommender system based on Meta's [actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf) and [SASRec](https://cseweb.ucsd.edu/~jmcauley/pdfs/icdm18.pdf).
 
 
-## v1.0: Basic Model
+## Basic Model
 
 1 Training Framework
 
@@ -59,7 +59,7 @@ We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},
     <p>Model Training following SASRec</p>
 </div>
 
-## Part1: Basic Implementation for **Matching**
+## Implementation for **Matching Task**
 
 **[actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf)'s design for Matching** 
 
@@ -106,6 +106,7 @@ Dataset:
 
 + [Movielens1M_m1](https://huggingface.co/datasets/reczoo/Movielens1M_m1)
 
+## Latest News
 
 <!-- ## Part2: Basic Implementation for **CTR Prediction**
 
