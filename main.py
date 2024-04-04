@@ -243,6 +243,12 @@ if __name__=="__main__":
     parser.add_argument('--eval_only', default=False, type=str2bool)
     parser.add_argument('--ckpt_name', default="epoch_0.pth", type=str)
     parser.add_argument('--model_name', default="llama", type=str)
+
+    # when use deepspeed
+    parser.add_argument("--local_rank", type=int, default=0)
+    parser.add_argument("--deepspeed", type=str, default="ds_config.json")
+    
+
     args = parser.parse_args()
 
     run = wandb.init(

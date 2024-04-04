@@ -3,13 +3,13 @@
 A toy large model for recommender system based on Meta's [actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf) and [SASRec](https://cseweb.ucsd.edu/~jmcauley/pdfs/icdm18.pdf).
 
 
-## v1.0: Basic Model
+## Basic Model
 
-1 Training Framework
+### Training Framework
 
 + [DDP](https://pytorch.org/tutorials/intermediate/ddp_tutorial.html)
 
-2 Model Architecture
+### Model Architecture
 
 + Version 1: Basic Implementation -- Combination of LLaMA2 and SASRec.
 
@@ -48,7 +48,7 @@ A toy large model for recommender system based on Meta's [actions-speak-louder-t
             <p>HSTU formulae & Structure</p>
         </div>
     
-3 Model Training
+### Model Training
 
 We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},\mathcal{S}_{2}^{u},\cdots,\mathcal{S}_{|\mathcal{S}^{u}|-1}^{u})$ to a fixed length sequence $s = \{s_1, s_2, . . . , s_n\}$ via truncation or padding items. We define $o_t$ as the expected output at time step $t$ and  adopt the binary cross entropy loss as the objective function as in SASRec.
 
@@ -59,11 +59,11 @@ We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},
     <p>Model Training following SASRec</p>
 </div>
 
-## Part1: Basic Implementation for **Matching**
+## Implementation for **Matching Task**
 
 **[actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf)'s design for Matching** 
 
-1 Data Process
+### Data Process
 
 Input is dataset of samples of ***user historical behavior sequences*** as follows.
 
@@ -74,7 +74,21 @@ Input is dataset of samples of ***user historical behavior sequences*** as follo
 
 Moreover, ***auxiliary time series tokens*** could be added into seqs above if available.
 
-2 Training
+<!-- ### docker -->
+
+### Installation
+
+use the command to setup environment
+```bash
+# add conda-forge
+conda config --add channels conda-forge
+
+# install env
+conda env create -f env.yml -n reclm
+conda activate reclm
+```
+
+### Training
 
 Predict $p(\hat{s}_{i+1}|s_1,\cdots,s_i )$, and ***non-behavioral tokens & negative feedback*** will not included in loss calculation.
 
@@ -87,7 +101,7 @@ torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name=
 torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name='hstu'
 ```
 
-3 Evaluation
+### Evaluation
 
 Use **NDCG\@10** and **HR\@10** to evaluate performance on whole dataset.
 
@@ -106,16 +120,85 @@ Dataset:
 
 + [Movielens1M_m1](https://huggingface.co/datasets/reczoo/Movielens1M_m1)
 
+### Support Acceleration by DeepSpeed 
 
-<!-- ## Part2: Basic Implementation for **CTR Prediction**
+To accelerate by [DeepSpeed](https://github.com/microsoft/DeepSpeed), use the command
+```bash
+# pip install deepspeed
+
+# recommended local compilation
+git clone https://github.com/microsoft/DeepSpeed/
+cd DeepSpeed
+rm -rf build
+TORCH_CUDA_ARCH_LIST="8.6" DS_BUILD_CPU_ADAM=1 DS_BUILD_UTILS=1 pip install . \
+--global-option="build_ext" --global-option="-j8" --no-cache -v \
+--disable-pip-version-check 2>&1 | tee build.log
+```
+
+#### Multi-node Configuration: Setup Passwordless SSH
+
+For resource configuration of multi-node, we need generate ssh-key by ***ssh-keygen*** and pass key to other nodes by ***ssh-copy-id***. Here we have one node with 2 gpus(NVIDIA RTX A6000). Still, we set multi-node configuration for guidance and in this case host just need to communicate with itself.
+
++ First generate ssh-key
+
+```bash
+ssh-keygen
+```
+
++ Write ~/.ssh/config to get nickname and identity file of host and as follows.
+
+```bash
+Host host1
+    User guyr
+        Hostname 127.0.0.1
+            port 22
+                IdentityFile ~/.ssh/id_rsa
+```
+
++ Write hostfile for deepspeed to get multi-node.
+
+```bash
+host1 slots=2
+```
+
++ Use ***ssh-copy-id*** to copy identity file to other nodes
+
+```bash
+ssh-copy-id -i ~/.ssh/id_rsa host1
+
+# test
+ssh host1
+```
+
+#### Argument Parser Configuration
+
+To successfully run deepspeed, we need to add ***local_rank*** & ***deepspeed*** parameters in argparser, since deepspeed will add these hyperparameters to each process when launching tasks.
+
+```python
+# when use deepspeed
+parser.add_argument("--local_rank", type=int, default=0)
+parser.add_argument("--deepspeed", type=str, default="ds_config.json")
+```
+
+Finally run deepspeed using the command
+
+```bash
+deepspeed --hostfile ./hostfile --master_port 12345 --include="host1:0,1" main.py --eval_only=false --model_name='llama' --deepspeed ds_config.json
+```
+
+## News
+
++ [2024/04]: Support [Deepspeed](https://www.deepspeed.ai/getting-started/).
+
+
+<!-- + [2024/04]: Support docker. -->
+
+
+<!-- ## Implementation for **CTR Prediction**
 
 ***------------------------------ !!! TBD !!! ------------------------------*** -->
 
-
-<!-- ## v1.1: Support [Deepspeed](https://github.com/microsoft/DeepSpeed)
-
-
-## v1.2: Support [Megatron](https://github.com/alibaba/Megatron-LLaMA)
+<!-- 
 
 ## v1.3 Support **Mixture of Experts(MoEs)** and **Sliding Window Attention(SWA)** based on [mistral](https://github.com/mistralai/mistral-src)
 
@@ -127,7 +210,6 @@ Dataset:
 
 
 ## v1.5: Add Time-series Prediction Methods
-
 
 ## v1.6: Support Multi-modal Features -->
 
