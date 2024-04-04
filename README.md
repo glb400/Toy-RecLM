@@ -116,7 +116,7 @@ torchrun --standalone --nproc_per_node=2 main.py --eval_only=true --ckpt_name='e
 
 About evaluation function, please refer to https://pmixer.github.io/posts/Argsort.
 
-Dataset: 
+Dataset
 
 + [Movielens1M_m1](https://huggingface.co/datasets/reczoo/Movielens1M_m1)
 
