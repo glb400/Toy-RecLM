@@ -101,7 +101,7 @@ def train_epoch(epoch, device, model_name):
             scaler.update()
             # flush the gradients as soon as we can, no need for this memory anymore
             optimizer.zero_grad(set_to_none=True)
-        #打印日志
+        # print log
         if step % log_interval == 0:
             spend_time=time.time()-start_time
             logger.info(
@@ -202,7 +202,6 @@ if __name__=="__main__":
     model_name = args.model_name
 
     out_dir = 'out'
-    # max_epoch = 1
     max_epoch = 50
     eval_interval = 1
     log_interval = 100
@@ -213,7 +212,7 @@ if __name__=="__main__":
     #
     gradient_accumulation_steps = 1 # used to simulate larger batch sizes
     batch_size = 32  # if gradient_accumulation_steps > 1, this is the micro-batch size
-    # model 根据需要更改 
+    # model config
     max_seq_len = 512
     dim = 512
     n_layers = 8
@@ -305,7 +304,7 @@ if __name__=="__main__":
     #
     best_val_loss = 1e9
     #
-    #-----init dataloader------
+    # init dataloader
     data_path_list=[
         './data/ml-1m',
     ]
@@ -358,7 +357,7 @@ if __name__=="__main__":
             if eval_only: break
             train_epoch(epoch, device, model_name)
             if ddp:
-                if torch.distributed.get_rank() == 0:  #一般用0，当然，可以选任意的rank保存。
+                if torch.distributed.get_rank() == 0:  # master node
                     torch.save(raw_model.state_dict(),'{}/{}_epoch_{}.pth'.format(save_dir,model_name,epoch))
             else:
                 torch.save(raw_model.state_dict(),'{}/{}_epoch_{}.pth'.format(save_dir,model_name,epoch))

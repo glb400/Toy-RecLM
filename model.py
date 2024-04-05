@@ -48,11 +48,6 @@ def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
 def reshape_for_broadcast(freqs_cis: torch.Tensor, x: torch.Tensor):
     ndim = x.ndim
     assert 0 <= 1 < ndim
-    # print(f"freqs_cis.shape:{freqs_cis.shape}")
-    # print(f"x.shape:{x.shape}")
-    # print(f"x[1].shape:{x.shape[1]}")
-    # print(f"x[-1].shape:{x.shape[-1]}")
-
     assert freqs_cis.shape == (x.shape[1], x.shape[-1])
     shape = [d if i == 1 or i == ndim - 1 else 1 for i, d in enumerate(x.shape)]
     return freqs_cis.view(shape)
@@ -274,7 +269,7 @@ class LLaMA2_SASRec(nn.Module):
         return log_feats
 
     def forward(self, user_ids: torch.Tensor, log_seqs: torch.Tensor, pos_seqs: torch.Tensor, neg_seqs: torch.Tensor) -> torch.Tensor:
-        log_feats = self.log2feats(log_seqs) # user_ids hasn't been used yet
+        log_feats = self.log2feats(log_seqs)
 
         # cite from SASRec
         pos_embs = self.item_emb(torch.tensor(pos_seqs, dtype=torch.long))
@@ -283,10 +278,7 @@ class LLaMA2_SASRec(nn.Module):
         pos_logits = (log_feats * pos_embs).sum(dim=-1)
         neg_logits = (log_feats * neg_embs).sum(dim=-1)
 
-        # pos_pred = self.pos_sigmoid(pos_logits)
-        # neg_pred = self.neg_sigmoid(neg_logits)
-
-        return pos_logits, neg_logits # pos_pred, neg_pred
+        return pos_logits, neg_logits
 
     def configure_optimizers(self, weight_decay, learning_rate, betas, device_type):
         # start with all of the candidate parameters
@@ -320,17 +312,12 @@ class LLaMA2_SASRec(nn.Module):
     @torch.no_grad()
     def predict(self, user_ids, log_seqs, item_indices): # for inference
         log_feats = self.log2feats(log_seqs) # user_ids hasn't been used yet
-
         final_feat = log_feats[:, -1, :] # only use last QKV classifier, a waste
 
-        # item_embs = self.item_emb(torch.LongTensor(item_indices).to(self.device)) # (U, I, C)
-        item_embs = self.item_emb(torch.tensor(item_indices, dtype=torch.long)) # (U, I, C)        
-
+        item_embs = self.item_emb(torch.tensor(item_indices, dtype=torch.long))
         logits = item_embs.matmul(final_feat.unsqueeze(-1)).squeeze(-1)
 
-        # preds = self.pos_sigmoid(logits) # rank same item list for different users
-
-        return logits # preds # (U, I)
+        return logits
 
 
 # ----- New Model Architecture (Version 2): Combination of Hierarchical Sequential Transduction Unit(HSTU) & SASRec for Recommender System -----
@@ -564,7 +551,7 @@ class HSTU_SASRec(nn.Module):
         return log_feats
 
     def forward(self, user_ids: torch.Tensor, log_seqs: torch.Tensor, pos_seqs: torch.Tensor, neg_seqs: torch.Tensor) -> torch.Tensor:
-        log_feats = self.log2feats(log_seqs) # user_ids hasn't been used yet
+        log_feats = self.log2feats(log_seqs)
 
         # cite from SASRec
         pos_embs = self.item_emb(torch.tensor(pos_seqs, dtype=torch.long))
@@ -573,10 +560,7 @@ class HSTU_SASRec(nn.Module):
         pos_logits = (log_feats * pos_embs).sum(dim=-1)
         neg_logits = (log_feats * neg_embs).sum(dim=-1)
 
-        # pos_pred = self.pos_sigmoid(pos_logits)
-        # neg_pred = self.neg_sigmoid(neg_logits)
-
-        return pos_logits, neg_logits # pos_pred, neg_pred
+        return pos_logits, neg_logits
 
     def configure_optimizers(self, weight_decay, learning_rate, betas, device_type):
         # start with all of the candidate parameters
@@ -608,16 +592,11 @@ class HSTU_SASRec(nn.Module):
 
     #@torch.inference_mode()
     @torch.no_grad()
-    def predict(self, user_ids, log_seqs, item_indices): # for inference
-        log_feats = self.log2feats(log_seqs) # user_ids hasn't been used yet
+    def predict(self, user_ids, log_seqs, item_indices):
+        log_feats = self.log2feats(log_seqs) 
+        final_feat = log_feats[:, -1, :]
 
-        final_feat = log_feats[:, -1, :] # only use last QKV classifier, a waste
-
-        # item_embs = self.item_emb(torch.LongTensor(item_indices).to(self.device)) # (U, I, C)
-        item_embs = self.item_emb(torch.tensor(item_indices, dtype=torch.long)) # (U, I, C)        
-
+        item_embs = self.item_emb(torch.tensor(item_indices, dtype=torch.long))        
         logits = item_embs.matmul(final_feat.unsqueeze(-1)).squeeze(-1)
 
-        # preds = self.pos_sigmoid(logits) # rank same item list for different users
-
-        return logits # preds # (U, I)
+        return logits
