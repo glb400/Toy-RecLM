@@ -52,68 +52,6 @@ def get_lr(it):
     return min_lr + coeff * (learning_rate - min_lr)
 
 
-# ----- Old Training Epoch: for Language Task -- X, Y refers to Tokens, Targets -----
-
-# def train_epoch(epoch):
-#     start_time=time.time()
-#     for step, (X, Y) in enumerate(train_loader):
-#         X=X.to(device)
-#         Y=Y.to(device)
-#         lr = get_lr(epoch*iter_per_epoch+step) if decay_lr else learning_rate
-#         for param_group in optimizer.param_groups:
-#             param_group['lr'] = lr
-#         # and using the GradScaler if data type is float16
-#         #for micro_step in range(gradient_accumulation_steps):
-#         if ddp:
-#             # in DDP training we only need to sync gradients at the last micro step.
-#             # the official way to do this is with model.no_sync() context manager, but
-#             # I really dislike that this bloats the code and forces us to repeat code
-#             # looking at the source of that context manager, it just toggles this variable
-#             model.require_backward_grad_sync = 0 == gradient_accumulation_steps - 1
-#         with ctx:
-#             logits = model(X, Y)
-#             loss = raw_model.last_loss
-#             loss = loss / gradient_accumulation_steps
-#         # immediately async prefetch next batch while model is doing the forward pass on the GPU
-#         # backward pass, with gradient scaling if training in fp16
-#         scaler.scale(loss).backward()
-#         #
-#         if (step + 1) % gradient_accumulation_steps == 0:
-#             # clip the gradient
-#             if grad_clip != 0.0:
-#                 scaler.unscale_(optimizer)
-#                 torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
-#             # step the optimizer and scaler if training in fp16
-#             scaler.step(optimizer)
-#             scaler.update()
-#             # flush the gradients as soon as we can, no need for this memory anymore
-#             optimizer.zero_grad(set_to_none=True)
-#         #打印日志
-#         if step % log_interval == 0:
-#             spend_time=time.time()-start_time
-#             logger.info(
-#                     'Epoch:[{}/{}]({}/{}) loss:{:.3f} lr:{:.7f} epoch_Time:{}min:'.format(
-#                         epoch,
-#                         max_epoch, 
-#                         step, 
-#                         iter_per_epoch,
-#                         loss.item(), 
-#                         optimizer.param_groups[-1]['lr'],
-#                         spend_time / (step+1) * iter_per_epoch // 60 - spend_time // 60))
-#             wandb.log({'loss': loss.item()})
-#         #
-#         if step % save_interval == 0:
-#             if ddp:
-#                 if torch.distributed.get_rank() == 0:
-#                     model.eval()
-#                     torch.save(model.module.state_dict(),'{}/iter_{}.pth'.format(save_dir,int(step+epoch*iter_per_epoch)))
-#                     model.train()
-#             else:
-#                 model.eval()
-#                 torch.save(model.state_dict(),'{}/iter_{}.pth'.format(save_dir,int(step+epoch*iter_per_epoch)))
-#                 model.train()
-
-
 # ----- New Training Epoch: for Recommender System -- logs_, Y refers to Tokens, Targets -----
 
 bce_criterion = torch.nn.BCEWithLogitsLoss()
@@ -370,7 +308,6 @@ if __name__=="__main__":
     #-----init dataloader------
     data_path_list=[
         './data/ml-1m',
-        # '../data/Movielens1M_m1/m1-1m'
     ]
     dataset = data_partition(data_path_list[0])
     [user_train, user_valid, user_test, usernum, itemnum] = dataset

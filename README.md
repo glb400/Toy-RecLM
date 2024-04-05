@@ -1,6 +1,6 @@
 # Toy-RecLM
 
-A toy large model for recommender system based on Meta's [actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf) and [SASRec](https://cseweb.ucsd.edu/~jmcauley/pdfs/icdm18.pdf).
+A toy large model for recommender system based on [LLaMA2](https://arxiv.org/pdf/2307.09288.pdf), [SASRec](https://cseweb.ucsd.edu/~jmcauley/pdfs/icdm18.pdf), and Meta's [actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf).
 
 
 ## Basic Model
@@ -200,16 +200,16 @@ deepspeed --hostfile ./hostfile --master_port 12345 --include="host1:0,1" main.p
 
 <!-- 
 
-## v1.3 Support **Mixture of Experts(MoEs)** and **Sliding Window Attention(SWA)** based on [mistral](https://github.com/mistralai/mistral-src)
+## Support **Mixture of Experts(MoEs)** and **Sliding Window Attention(SWA)** based on [mistral](https://github.com/mistralai/mistral-src)
 
-## v1.4: Support Low-memory & Acceleration Optimization
+## Support Low-memory & Acceleration Optimization
 
 + Support Quantization and Parameter-efficient Fine-tuning(PEFT) methods based on [lit-llama](https://github.com/Lightning-AI/lit-llama).
 
 + Support Low-memory Optimizers, e.g., [Adafactor](https://arxiv.org/abs/1804.04235), [Sophia](https://arxiv.org/abs/2305.14342), [LOMO](https://github.com/OpenLMLab/LOMO).
 
 
-## v1.5: Add Time-series Prediction Methods
+## Add Time-series Prediction Methods
 
-## v1.6: Support Multi-modal Features -->
+## vSupport Multi-modal Features -->
 
