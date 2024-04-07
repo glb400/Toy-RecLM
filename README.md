@@ -3,13 +3,13 @@
 A toy large model for recommender system based on [LLaMA2](https://arxiv.org/pdf/2307.09288.pdf), [SASRec](https://cseweb.ucsd.edu/~jmcauley/pdfs/icdm18.pdf), and Meta's [actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf).
 
 
-## Basic Model
+## 1. Basic Model
 
-### Training Framework
+### 1.1 Training Framework
 
 + [DDP](https://pytorch.org/tutorials/intermediate/ddp_tutorial.html)
 
-### Model Architecture
+### 1.2 Model Architecture
 
 + Version 1: Basic Implementation -- Combination of LLaMA2 and SASRec.
 
@@ -48,7 +48,7 @@ A toy large model for recommender system based on [LLaMA2](https://arxiv.org/pdf
             <p>HSTU formulae & Structure</p>
         </div>
     
-### Model Training
+### 1.3 Model Training
 
 We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},\mathcal{S}_{2}^{u},\cdots,\mathcal{S}_{|\mathcal{S}^{u}|-1}^{u})$ to a fixed length sequence $s = \{s_1, s_2, . . . , s_n\}$ via truncation or padding items. We define $o_t$ as the expected output at time step $t$ and  adopt the binary cross entropy loss as the objective function as in SASRec.
 
@@ -59,11 +59,11 @@ We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},
     <p>Model Training following SASRec</p>
 </div>
 
-## Implementation for **Matching Task**
+## 2. Implementation for **Matching Task**
 
 **[actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf)'s design for Matching** 
 
-### Data Process
+### 2.1 Data Process
 
 Input is dataset of samples of ***user historical behavior sequences*** as follows.
 
@@ -76,7 +76,7 @@ Moreover, ***auxiliary time series tokens*** could be added into seqs above if a
 
 <!-- ### docker -->
 
-### Installation
+### 2.2 Installation
 
 use the command to setup environment
 ```bash
@@ -88,7 +88,7 @@ conda env create -f env.yml -n reclm
 conda activate reclm
 ```
 
-### Training
+### 2.3 Training
 
 Predict $p(\hat{s}_{i+1}|s_1,\cdots,s_i )$, and ***non-behavioral tokens & negative feedback*** will not included in loss calculation.
 
@@ -101,7 +101,7 @@ torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name=
 torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name='hstu'
 ```
 
-### Evaluation
+### 2.4 Evaluation
 
 Use **NDCG\@10** and **HR\@10** to evaluate performance on whole dataset.
 
@@ -120,7 +120,9 @@ Dataset:
 
 + [Movielens1M_m1](https://huggingface.co/datasets/reczoo/Movielens1M_m1)
 
-### Support Acceleration by DeepSpeed 
+## 3. Support for New Features
+
+### 3.1 Support Acceleration by DeepSpeed 
 
 To accelerate by [DeepSpeed](https://github.com/microsoft/DeepSpeed), use the command
 ```bash
@@ -186,12 +188,65 @@ Finally run deepspeed using the command
 deepspeed --hostfile ./hostfile --master_port 12345 --include="host1:0,1" main.py --eval_only=false --model_name='llama' --deepspeed ds_config.json
 ```
 
-## News
+### 3.2 Support Setuptools & Docker
 
-+ [2024/04]: Support [Deepspeed](https://www.deepspeed.ai/getting-started/).
+#### Setuptools
 
+Add ***setup.py*** to set package configuration and required packages.
 
-<!-- + [2024/04]: Support docker. -->
+#### Docker
+
++ Install [Ubuntu docker](https://www.runoob.com/docker/ubuntu-docker-install.html), test installation using the command
+```bash
+docker run hello-world
+```
+
++ Add Dockerfile
+
+Add Dockerfile to build docker env. Specifically, we use the command ***\$ pip install -e .[deepspeed]*** to build env by ***setup.py*** in path './' and make this package editable. Use the command
+```bash
+# build docker
+docker build -t toyreclm .
+```
+
++ Add gpu configuration to docker
+
+Use the command to add nvidia-container-script
+```bash
+sudo sh nvidia-container-runtime-script.sh
+sudo apt-get install nvidia-container-runtime
+sudo apt-get install -y nvidia-container-toolkit
+sudo systemctl restart docker
+
+# check
+which nvidia-container-runtime # /usr/bin/nvidia-container-runtime
+```
+
++ Run docker
+
+Use the command to run docker container
+```bash
+# run docker with container name $reclm$ and volume corresponding folders
+docker run -it --gpus all --name reclm -e CONTAINER_NAME=reclm -v ./data:/app/data toyreclm /bin/bash
+# # to copy data files into container
+# docker cp ./data $CONTAINER_NAME:/app/
+
+# check container name
+echo $CONTAINER_NAME
+
+# run ddp
+torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name='llama'
+```
+
+**WHY NOT DEEPSPEED?**
+
+Install SSH is not recommended in docker since it conflicts with the concept of docker that each container runs only one process.
+
+## 4. News
+
++ [2024.4.4]: Support [Deepspeed](https://www.deepspeed.ai/getting-started/).
+
++ [2024.4.7]: Support [setuptools](https://pypi.org/project/setuptools/) and [Docker](https://www.docker.com/).
 
 
 <!-- ## Implementation for **CTR Prediction**
@@ -208,8 +263,9 @@ deepspeed --hostfile ./hostfile --master_port 12345 --include="host1:0,1" main.p
 
 + Support Low-memory Optimizers, e.g., [Adafactor](https://arxiv.org/abs/1804.04235), [Sophia](https://arxiv.org/abs/2305.14342), [LOMO](https://github.com/OpenLMLab/LOMO).
 
+## Support vLLM
 
 ## Add Time-series Prediction Methods
 
-## vSupport Multi-modal Features -->
+## Support Multi-modal Features -->
 
