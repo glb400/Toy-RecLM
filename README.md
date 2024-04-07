@@ -24,17 +24,17 @@ A toy large model for recommender system based on [LLaMA2](https://arxiv.org/pdf
 
     + Part 2.1: After Transformer Blocks, we implement prediction layer in SASRec. Specifically, we adopt an MF layer to predict the relevance of item $i$ by sharing item embedding.
 
-    <div  align="center">    
+    <!-- <div  align="center">    
         <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/sasrec1.png" width = "200" align=center />
         <p>MF Layer using Shared Item Embedding</p>
-    </div>
+    </div> -->
      
     + Part 2.2: we generate an embedding by considering all actions of a user following SASrec.
 
-    <div  align="center">    
+    <!-- <div  align="center">    
         <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/sasrec2.png" width = "200" align=center />
         <p>Explicit User Modeling by Generating Embedding</p>
-    </div>
+    </div> -->
 
 + Version 2. **[actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf)'s modification for Model** -- Hierarchical Sequential Transduction Unit (HSTU)
 
@@ -52,12 +52,12 @@ A toy large model for recommender system based on [LLaMA2](https://arxiv.org/pdf
 
 We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},\mathcal{S}_{2}^{u},\cdots,\mathcal{S}_{|\mathcal{S}^{u}|-1}^{u})$ to a fixed length sequence $s = \{s_1, s_2, . . . , s_n\}$ via truncation or padding items. We define $o_t$ as the expected output at time step $t$ and  adopt the binary cross entropy loss as the objective function as in SASRec.
 
-<div  align="center">    
+<!-- <div  align="center">    
     <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/sasrec3.png" width = "200" align=center />
     <br>
     <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/sasrec4.png" width = "200" align=center />
     <p>Model Training following SASRec</p>
-</div>
+</div> -->
 
 ## 2. Implementation for **Matching Task**
 
@@ -242,11 +242,16 @@ torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name=
 
 Install SSH is not recommended in docker since it conflicts with the concept of docker that each container runs only one process.
 
+<!-- ### 3.3 Support Model Compression Techniques -->
+
+
 ## 4. News
 
 + [2024.4.4]: Support [Deepspeed](https://www.deepspeed.ai/getting-started/).
 
 + [2024.4.7]: Support [setuptools](https://pypi.org/project/setuptools/) and [Docker](https://www.docker.com/).
+
+<!-- + [2024.4.8]: Support Model Compression Techniques (Quantization) -->
 
 
 <!-- ## Implementation for **CTR Prediction**
