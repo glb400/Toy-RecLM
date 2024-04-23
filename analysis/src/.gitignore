@@ -1,6 +1,10 @@
 # Don't check in parsed data files
 tmp/
 
+# Addtional deletes
+ckpts/
+exps/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -154,7 +158,3 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
-# Addtional deletes
-ckpts/
-exps/
