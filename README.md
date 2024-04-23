@@ -1,15 +1,16 @@
 # Toy-RecLM
 
-A toy large model for recommender system based on [LLaMA2](https://arxiv.org/pdf/2307.09288.pdf), [SASRec](https://cseweb.ucsd.edu/~jmcauley/pdfs/icdm18.pdf), and Meta's [actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf).
+①A toy large model for recommender system based on [LLaMA2](https://arxiv.org/pdf/2307.09288.pdf), [SASRec](https://cseweb.ucsd.edu/~jmcauley/pdfs/icdm18.pdf), and Meta's [generative recommenders](https://arxiv.org/pdf/2402.17152.pdf). ②Note and experiments of [official implementation](https://github.com/facebookresearch/generative-recommenders) for Meta's generative recommenders.
 
+## Part 1. DIY Toy RecLM
 
-## 1. Basic Model
+Toy RecLM includes DIY model based on LLaMA2(HSTU) + SASRec prediction layer.  
 
-### 1.1 Training Framework
+### 1.1. Training Framework
 
 + [DDP](https://pytorch.org/tutorials/intermediate/ddp_tutorial.html)
 
-### 1.2 Model Architecture
+### 1.2. Model Architecture
 
 + Version 1: Basic Implementation -- Combination of LLaMA2 and SASRec.
 
@@ -18,7 +19,9 @@ A toy large model for recommender system based on [LLaMA2](https://arxiv.org/pdf
     + Part 1: At first, we stack LLaMA2's Transformer Blocks. Note that since LLaMA2 uses decoder-only framework, it utilizes casual mask just the same as SASRec. 
 
     <div  align="center">    
-        <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/llama1.png" width = "200" align=center />
+        <!-- <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/llama1.png" width = "200" align=center />
+        <p>LLaMA2 Transformer Block</p> -->
+        <img src="./figs/llama1.png" width = "200" align=center />
         <p>LLaMA2 Transformer Block</p>
     </div>
 
@@ -43,14 +46,20 @@ A toy large model for recommender system based on [LLaMA2](https://arxiv.org/pdf
     + HSTU
         
         <div  align="center">    
-            <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm2.png" width = "200" align=center />
-            <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm3.png" width = "200" align=center />
+            <!-- <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm2.png" width = "200" align=center />
+            <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm3.png" width = "200" align=center /> -->
+            <img src="./figs/metallm2.png" width = "200" align=center />
+            <img src="./figs/metallm3.png" width = "200" align=center />
             <p>HSTU formulae & Structure</p>
         </div>
     
-### 1.3 Model Training
+### 1.3. Model Training
 
-We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},\mathcal{S}_{2}^{u},\cdots,\mathcal{S}_{|\mathcal{S}^{u}|-1}^{u})$ to a fixed length sequence $s = \{s_1, s_2, . . . , s_n\}$ via truncation or padding items. We define $o_t$ as the expected output at time step $t$ and  adopt the binary cross entropy loss as the objective function as in SASRec.
+We convert each user sequence (excluding the last action) 
+$$
+(\mathcal{S}_{1}^{u},\mathcal{S}_{2}^{u},\cdots,\mathcal{S}_{|\mathcal{S}^{u}|-1}^{u})
+$$ 
+to a fixed length sequence $s = \{s_1, s_2, . . . , s_n\}$ via truncation or padding items. We define $o_t$ as the expected output at time step $t$ and  adopt the binary cross entropy loss as the objective function as in SASRec.
 
 <!-- <div  align="center">    
     <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/sasrec3.png" width = "200" align=center />
@@ -59,11 +68,11 @@ We convert each user sequence (excluding the last action) $(\mathcal{S}_{1}^{u},
     <p>Model Training following SASRec</p>
 </div> -->
 
-## 2. Implementation for **Matching Task**
+### 1.4. Implementation for **Matching Task**
 
 **[actions-speak-louder-than-words](https://arxiv.org/pdf/2402.17152.pdf)'s design for Matching** 
 
-### 2.1 Data Process
+#### 1.4.1. Data Process
 
 Input is dataset of samples of ***user historical behavior sequences*** as follows.
 
@@ -74,9 +83,7 @@ Input is dataset of samples of ***user historical behavior sequences*** as follo
 
 Moreover, ***auxiliary time series tokens*** could be added into seqs above if available.
 
-<!-- ### docker -->
-
-### 2.2 Installation
+#### 1.4.2. Installation
 
 use the command to setup environment
 ```bash
@@ -88,7 +95,7 @@ conda env create -f env.yml -n reclm
 conda activate reclm
 ```
 
-### 2.3 Training
+#### 1.4.3. Training
 
 Predict $p(\hat{s}_{i+1}|s_1,\cdots,s_i )$, and ***non-behavioral tokens & negative feedback*** will not included in loss calculation.
 
@@ -101,7 +108,7 @@ torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name=
 torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name='hstu'
 ```
 
-### 2.4 Evaluation
+#### 1.4.4. Evaluation
 
 Use **NDCG\@10** and **HR\@10** to evaluate performance on whole dataset.
 
@@ -120,9 +127,9 @@ Dataset:
 
 + [Movielens1M_m1](https://huggingface.co/datasets/reczoo/Movielens1M_m1)
 
-## 3. Support for New Features
+### 1.5. Training Support
 
-### 3.1 Support Acceleration by DeepSpeed 
+#### 1.5.1. Support Acceleration by DeepSpeed 
 
 To accelerate by [DeepSpeed](https://github.com/microsoft/DeepSpeed), use the command
 ```bash
@@ -137,7 +144,7 @@ TORCH_CUDA_ARCH_LIST="8.6" DS_BUILD_CPU_ADAM=1 DS_BUILD_UTILS=1 pip install . \
 --disable-pip-version-check 2>&1 | tee build.log
 ```
 
-#### Multi-node Configuration: Setup Passwordless SSH
+##### Multi-node Configuration: Setup Passwordless SSH
 
 For resource configuration of multi-node, we need generate ssh-key by ***ssh-keygen*** and pass key to other nodes by ***ssh-copy-id***. Here we have one node with 2 gpus(NVIDIA RTX A6000). Still, we set multi-node configuration for guidance and in this case host just need to communicate with itself.
 
@@ -172,7 +179,7 @@ ssh-copy-id -i ~/.ssh/id_rsa host1
 ssh host1
 ```
 
-#### Argument Parser Configuration
+##### Argument Parser Configuration
 
 To successfully run deepspeed, we need to add ***local_rank*** & ***deepspeed*** parameters in argparser, since deepspeed will add these hyperparameters to each process when launching tasks.
 
@@ -188,13 +195,13 @@ Finally run deepspeed using the command
 deepspeed --hostfile ./hostfile --master_port 12345 --include="host1:0,1" main.py --eval_only=false --model_name='llama' --deepspeed ds_config.json
 ```
 
-### 3.2 Support Setuptools & Docker
+#### 1.5.2. Support Setuptools & Docker
 
-#### Setuptools
+##### Setuptools
 
 Add ***setup.py*** to set package configuration and required packages.
 
-#### Docker
+##### Docker
 
 + Install [Ubuntu docker](https://www.runoob.com/docker/ubuntu-docker-install.html), test installation using the command
 ```bash
@@ -242,35 +249,34 @@ torchrun --standalone --nproc_per_node=2 main.py --eval_only=false --model_name=
 
 Install SSH is not recommended in docker since it conflicts with the concept of docker that each container runs only one process.
 
-<!-- ### 3.3 Support Model Compression Techniques -->
-
-
-## 4. News
+### 1.6. News
 
 + [2024.4.4]: Support [Deepspeed](https://www.deepspeed.ai/getting-started/).
 
 + [2024.4.7]: Support [setuptools](https://pypi.org/project/setuptools/) and [Docker](https://www.docker.com/).
 
-<!-- + [2024.4.8]: Support Model Compression Techniques (Quantization) -->
 
+## Part 2. Note and Experiments for Official Implementation
 
-<!-- ## Implementation for **CTR Prediction**
+Facebookresearch updates [official implementation of generative recommenders](https://github.com/facebookresearch/generative-recommenders), here to analyze and carry out additional experiments for better comprehension. **This part is placed at the folder './analysis'**.
 
-***------------------------------ !!! TBD !!! ------------------------------*** -->
+```
+├─analysis
+  ├──note
+  │  ├───details.md
+  │  ├───neural-retrieval-accelerator.md
+  │  └───adaptation4rec.md
+  ├──exp
+  └──src
+```
 
-<!-- 
+### 2.1 Note
 
-## Support **Mixture of Experts(MoEs)** and **Sliding Window Attention(SWA)** based on [mistral](https://github.com/mistralai/mistral-src)
+In [details.md](./analysis/note/details.md), we discuss the details of the generative-recommender, e.g., 
++ data preprocess
++ training process
++ model architecture
 
-## Support Low-memory & Acceleration Optimization
+Notably, this work inherits many ideas from [Revisiting Neural Retrieval on Accelerators](https://arxiv.org/abs/2306.04039), and these work are from same authors. 
 
-+ Support Quantization and Parameter-efficient Fine-tuning(PEFT) methods based on [lit-llama](https://github.com/Lightning-AI/lit-llama).
-
-+ Support Low-memory Optimizers, e.g., [Adafactor](https://arxiv.org/abs/1804.04235), [Sophia](https://arxiv.org/abs/2305.14342), [LOMO](https://github.com/OpenLMLab/LOMO).
-
-## Support vLLM
-
-## Add Time-series Prediction Methods
-
-## Support Multi-modal Features -->
-
+So, in [neural-retrieval-accelerator.md](./analysis/note/neural-retrieval-accelerator.md), we discuss the details of this related work.
