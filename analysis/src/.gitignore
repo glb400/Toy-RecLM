@@ -154,3 +154,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Addtional deletes
+ckpts/
+exps/
