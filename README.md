@@ -19,10 +19,10 @@ Toy RecLM includes DIY model based on LLaMA2(HSTU) + SASRec prediction layer.
     + Part 1: At first, we stack LLaMA2's Transformer Blocks. Note that since LLaMA2 uses decoder-only framework, it utilizes casual mask just the same as SASRec. 
 
     <div  align="center">    
-        <!-- <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/llama1.png" width = "200" align=center />
-        <p>LLaMA2 Transformer Block</p> -->
-        <img src="./figs/llama1.png" width = "200" align=center />
+        <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/llama1.png" width = "200" align=center />
         <p>LLaMA2 Transformer Block</p>
+        <!-- <img src="./figs/llama1.png" width = "200" align=center />
+        <p>LLaMA2 Transformer Block</p> -->
     </div>
 
     + Part 2.1: After Transformer Blocks, we implement prediction layer in SASRec. Specifically, we adopt an MF layer to predict the relevance of item $i$ by sharing item embedding.
@@ -46,10 +46,10 @@ Toy RecLM includes DIY model based on LLaMA2(HSTU) + SASRec prediction layer.
     + HSTU
         
         <div  align="center">    
-            <!-- <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm2.png" width = "200" align=center />
-            <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm3.png" width = "200" align=center /> -->
-            <img src="./figs/metallm2.png" width = "200" align=center />
-            <img src="./figs/metallm3.png" width = "200" align=center />
+            <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm2.png" width = "200" align=center />
+            <img src="https://github.com/glb400/Toy-RecLM/blob/main/figs/metallm3.png" width = "200" align=center />
+            <!-- <img src="./figs/metallm2.png" width = "200" align=center />
+            <img src="./figs/metallm3.png" width = "200" align=center /> -->
             <p>HSTU formulae & Structure</p>
         </div>
     
