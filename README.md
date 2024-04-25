@@ -264,8 +264,7 @@ Facebookresearch updates [official implementation of generative recommenders](ht
 ├─analysis
   ├──note
   │  ├───details.md
-  │  ├───neural-retrieval-accelerator.md
-  │  └───adaptation4rec.md
+  │  └───neural-retrieval-accelerator.md
   ├──exp
   └──src
 ```
@@ -280,3 +279,11 @@ In [details.md](./analysis/note/details.md), we discuss the details of the gener
 Notably, this work inherits many ideas from [Revisiting Neural Retrieval on Accelerators](https://arxiv.org/abs/2306.04039), and these work are from same authors. 
 
 So, in [neural-retrieval-accelerator.md](./analysis/note/neural-retrieval-accelerator.md), we discuss the details of this related work.
+
+### 2.2 Experiments
+
++ LM new features
++ parameter-efficient fine-tuning
++ quantization
++ model size
++ hyper-parameter
